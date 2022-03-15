@@ -68,7 +68,7 @@ note that the esp32-s3 boards are not yet officially supported by the esp32 libr
 
 installation is simple you just use the arduino ide to flash the sketch/firmware to the esp32 board.<br>
 <br>
-next you connect to the wifi access point with a pc/laptop, <b>PS4_WEB_AP</b> is the default SSID and <b>password</b> is the default password.<br>
+next you connect to the wifi access point with a pc/laptop, <b>PS5_WEB_AP</b> is the default SSID and <b>password</b> is the default password.<br>
 then use a webbrowser and goto http://10.1.1.1/admin.html <b>10.1.1.1</b> is the defult webserver ip or http://ps5.local<br>
 on the side menu of the admin page select <b>File Uploader</b> and then click <b>Select Files</b> and locate the <b>data</b> folder inside the <b>PS5_Server32</b> folder in this repo and select all the files inside the <b>data</b> folder and click <b>Upload Files</b>
 you can then goto <b>Config Editor</b> and change the password for the wifi ap.
