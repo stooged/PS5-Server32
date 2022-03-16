@@ -11,8 +11,6 @@
 #include <ESPmDNS.h>
 #include <Update.h>
 #include <DNSServer.h>
-#include "cert.h"
-#include "private_key.h"
 #include "jzip.h"
 
 #if defined(CONFIG_IDF_TARGET_ESP32S2) | defined(CONFIG_IDF_TARGET_ESP32S3) // ESP32-S2/S3 BOARDS(usb emulation)
@@ -91,8 +89,8 @@ String firmwareVer = "1.00";
 #include "Pages.h"
 DNSServer dnsServer;
 using namespace httpsserver;
-SSLCert cert = SSLCert(crt_DER, crt_DER_len, key_DER, key_DER_len);
-HTTPSServer secureServer = HTTPSServer(&cert);
+SSLCert *cert;
+HTTPSServer *secureServer;
 HTTPServer insecureServer = HTTPServer();
 boolean hasEnabled = false;
 boolean isFormating = false;
@@ -107,7 +105,7 @@ USBMSC dev;
 /*
 #if ARDUINO_USB_CDC_ON_BOOT
 #define HWSerial Serial0
-#define USBSerial Serial
+#define USBSerial HWSerial
 #else
 #define HWSerial Serial
 #if defined(CONFIG_IDF_TARGET_ESP32S2) | defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -202,7 +200,7 @@ void handleFileMan(HTTPRequest *req, HTTPResponse *res)
       break;
     }
     String fname = String(file.name());
-    if (fname.length() > 0 && !fname.equals("config.ini") && !file.isDirectory())
+    if (fname.length() > 0 && !fname.equals("config.ini") && !file.isDirectory() && !fname.equals("cert.der") && !fname.equals("pk.pem"))
     {
       fileCount++;
       fname.replace("|", "%7C");
@@ -241,7 +239,7 @@ void handleDlFiles(HTTPRequest *req, HTTPResponse *res)
       break;
     }
     String fname = String(file.name());
-    if (fname.length() > 0 && !fname.equals("config.ini") && !file.isDirectory())
+    if (fname.length() > 0 && !fname.equals("config.ini") && !file.isDirectory() && !fname.equals("cert.der") && !fname.equals("pk.pem"))
     {
       fileCount++;
       fname.replace("\"", "%22");
@@ -470,6 +468,10 @@ void handleReboot(HTTPRequest *req, HTTPResponse *res)
 
 void handleFormat(HTTPRequest *req, HTTPResponse *res)
 {
+#if USESD
+    res->setStatusCode(304);
+    res->setStatusText("Not Modified");
+#else
   if (req->getMethod() == "POST")
   {
     res->setStatusCode(304);
@@ -484,6 +486,7 @@ void handleFormat(HTTPRequest *req, HTTPResponse *res)
     res->setStatusText("OK");
     res->write(format_gz, sizeof(format_gz));
   }
+#endif
 }
 
 
@@ -606,7 +609,7 @@ void handleCacheManifest(HTTPRequest *req, HTTPResponse *res) {
       break;
     }
     String fname = String(file.name());
-    if (fname.length() > 0 && !fname.equals("config.ini") && !file.isDirectory())
+    if (fname.length() > 0 && !fname.equals("config.ini") && !file.isDirectory() && !fname.equals("cert.der") && !fname.equals("pk.pem"))
     {
       if (fname.endsWith(".gz")) {
         fname = fname.substring(0, fname.length() - 3);
@@ -779,7 +782,7 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
   }
 
 #if USECONFIG
-  if (path.endsWith("/config.ini"))
+  if (path.endsWith("/config.ini") || path.endsWith("/cert.der") || path.endsWith("/pk.pem"))
   {
     res->setStatusCode(404);
     res->setStatusText("Not Found");
@@ -931,7 +934,9 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     res->setStatusCode(200);
     res->setStatusText("OK");
     res->setHeader("Content-Length", String(filesize).c_str());
-
+    if(isGzip){
+      res->setHeader("Content-Encoding", "gzip");
+    }
     uint8_t buf[256];
     while (dataFile.available())
     {
@@ -1200,15 +1205,54 @@ void setup()
     }
   }
 
+
+  if (FILESYS.exists("/pk.pem") && FILESYS.exists("/cert.der"))
+  {
+    uint8_t* cBuffer;
+    uint8_t* kBuffer;
+    unsigned int clen = 0;
+    unsigned int klen = 0;
+    File certFile = FILESYS.open("/cert.der", "r");
+    clen = certFile.size();
+    cBuffer = (uint8_t*)malloc(clen);
+    certFile.read(cBuffer, clen);
+    certFile.close();
+    File pkFile = FILESYS.open("/pk.pem", "r");
+    klen = pkFile.size();
+    kBuffer = (uint8_t*)malloc(klen);
+    pkFile.read(kBuffer, klen);
+    pkFile.close();
+    cert = new SSLCert(cBuffer, clen, kBuffer, klen);
+  }else{
+    cert = new SSLCert();
+    String keyInf = "CN=" + WIFI_HOSTNAME + ",O=Esp32_Server,C=US";
+    int createCertResult = createSelfSignedCert(*cert, KEYSIZE_1024, (std::string)keyInf.c_str(), "20190101000000", "20300101000000");
+    if (createCertResult != 0) {
+      //HWSerial.printf("Certificate failed, Error Code = 0x%02X\n", createCertResult);
+    }else{
+      //HWSerial.println("Certificate created");
+      File pkFile = FILESYS.open("/pk.pem", "w");
+      pkFile.write( cert->getPKData(), cert->getPKLength());
+      pkFile.close();
+      File certFile = FILESYS.open("/cert.der", "w");
+      certFile.write(cert->getCertData(), cert->getCertLength());
+      certFile.close();
+    }
+  }
+
+
+  secureServer = new HTTPSServer(cert);
+
   ResourceNode *nhttp = new ResourceNode("", "ANY", &handleHTTP);
   ResourceNode *nhttps = new ResourceNode("", "ANY", &handleHTTPS);
 
-  secureServer.setDefaultNode(nhttps);
+  secureServer->setDefaultNode(nhttps);
+  secureServer->start();
+  
   insecureServer.setDefaultNode(nhttp);
-  secureServer.start();
   insecureServer.start();
 
-  if (secureServer.isRunning() && insecureServer.isRunning())
+  if (secureServer->isRunning() && insecureServer.isRunning())
   {
     //HWSerial.println("HTTP Server started");
   }
@@ -1267,7 +1311,8 @@ void disableUSB()
 void loop()
 {
   dnsServer.processNextRequest();
-  secureServer.loop();
+  //secureServer.loop();
+  secureServer->loop();
   insecureServer.loop();
   if (hasEnabled && millis() >= (enTime + 15000))
   {
