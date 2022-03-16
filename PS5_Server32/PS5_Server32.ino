@@ -218,8 +218,6 @@ void handleFileMan(HTTPRequest *req, HTTPResponse *res)
     output += "];var output = \"\";filelist.forEach(function(entry) {var splF = entry.split(\"|\"); output += \"<tr>\";output += \"<td><a href=\\\"\" +  splF[0] + \"\\\">\" + splF[0] + \"</a></td>\"; output += \"<td>\" + splF[1] + \"</td>\";output += \"<td><a href=\\\"/\" + splF[0] + \"\\\" download><button type=\\\"submit\\\">Download</button></a></td>\";output += \"<td><form action=\\\"/delete\\\" method=\\\"post\\\"><button type=\\\"submit\\\" name=\\\"file\\\" value=\\\"\" + splF[0] + \"\\\" onClick=\\\"return statusDel('\" + splF[0] + \"');\\\">Delete</button></form></td>\";output += \"</tr>\";}); document.getElementById(\"filetable\").innerHTML = \"<tr><th colspan='1'><center>File Name</center></th><th colspan='1'><center>File Size</center></th><th colspan='1'><center><a href='/dlall' target='mframe'><button type='submit'>Download All</button></a></center></th><th colspan='1'><center><a href='/format.html' target='mframe'><button type='submit'>Delete All</button></a></center></th></tr>\" + output;</script></body></html>";
   }
   res->setHeader("Content-Type", "text/html");
-  res->setStatusCode(200);
-  res->setStatusText("OK");
   res->setHeader("Content-Length", String(output.length()).c_str());
   res->println(output.c_str());
 }
@@ -256,8 +254,6 @@ void handleDlFiles(HTTPRequest *req, HTTPResponse *res)
     output += "]; async function dlAll(){var zip = new JSZip();for (var i = 0; i < filelist.length; i++) {if (filelist[i] != ''){var xhr = new XMLHttpRequest();xhr.open('GET',filelist[i],false);xhr.overrideMimeType('text/plain; charset=x-user-defined'); xhr.onload = function(e) {if (this.status == 200) {zip.file(filelist[i], this.response,{binary: true});}};xhr.send();document.getElementById('fp').innerHTML = 'Adding: ' + filelist[i];await new Promise(r => setTimeout(r, 50));}}document.getElementById('gen').style.display = 'none';document.getElementById('comp').style.display = 'block';zip.generateAsync({type:'blob'}).then(function(content) {saveAs(content,'esp_files.zip');});}</script></head><body onload='setTimeout(dlAll,100);'><center><br><br><br><br><div id='gen' style='display:block;'><div id='loader'></div><br><br>Generating ZIP<br><p id='fp'></p></div><div id='comp' style='display:none;'><br><br><br><br>Complete<br><br>Downloading: esp_files.zip</div></center></body></html>";
   }
   res->setHeader("Content-Type", "text/html");
-  res->setStatusCode(200);
-  res->setStatusText("OK");
   res->setHeader("Content-Length", String(output.length()).c_str());
   res->println(output.c_str());
 }
@@ -305,8 +301,6 @@ void handlePayloads(HTTPRequest *req, HTTPResponse *res)
   }
   output += "</center></body></html>";
   res->setHeader("Content-Type", "text/html");
-  res->setStatusCode(200);
-  res->setStatusText("OK");
   res->setHeader("Content-Length", String(output.length()).c_str());
   res->println(output.c_str());
 }
@@ -396,8 +390,6 @@ void handleInfo(HTTPRequest *req, HTTPResponse *res)
   output += "Free space available: " + formatBytes(ESP.getFreeSketchSpace() - ESP.getSketchSize()) + "<br><hr>";
   output += "</html>";
   res->setHeader("Content-Type", "text/html");
-  res->setStatusCode(200);
-  res->setStatusText("OK");
   res->setHeader("Content-Length", String(output.length()).c_str());
   res->println(output.c_str());
 }
@@ -436,8 +428,6 @@ void handleUpload(HTTPRequest *req, HTTPResponse *res)
   {
     res->setHeader("Content-Type", "text/html");
     res->setHeader("Content-Encoding", "gzip");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->write(upload_gz, sizeof(upload_gz));
   }
 }
@@ -449,8 +439,6 @@ void handleReboot(HTTPRequest *req, HTTPResponse *res)
   {
     res->setHeader("Content-Type", "text/html");
     res->setHeader("Content-Encoding", "gzip");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->write(rebooting_gz, sizeof(rebooting_gz));
     delay(1000);
     isRebooting = true;
@@ -459,8 +447,6 @@ void handleReboot(HTTPRequest *req, HTTPResponse *res)
   {
     res->setHeader("Content-Type", "text/html");
     res->setHeader("Content-Encoding", "gzip");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->write(reboot_gz, sizeof(reboot_gz));
   }
 }
@@ -482,8 +468,6 @@ void handleFormat(HTTPRequest *req, HTTPResponse *res)
   {
     res->setHeader("Content-Type", "text/html");
     res->setHeader("Content-Encoding", "gzip");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->write(format_gz, sizeof(format_gz));
   }
 #endif
@@ -566,8 +550,6 @@ void handleConfig(HTTPRequest *req, HTTPResponse *res)
     }
     String output = "<!DOCTYPE html><html><head><meta http-equiv=\"refresh\" content=\"8; url=/info.html\"><style type=\"text/css\">#loader {z-index: 1;width: 50px;height: 50px;margin: 0 0 0 0;border: 6px solid #f3f3f3;border-radius: 50%;border-top: 6px solid #3498db;width: 50px;height: 50px;-webkit-animation: spin 2s linear infinite;animation: spin 2s linear infinite; } @-webkit-keyframes spin {0%{-webkit-transform: rotate(0deg);}100%{-webkit-transform: rotate(360deg);}}@keyframes spin{0%{ transform: rotate(0deg);}100%{transform: rotate(360deg);}}body {background-color: #1451AE; color: #ffffff; font-size: 20px; font-weight: bold; margin: 0 0 0 0.0; padding: 0.4em 0.4em 0.4em 0.6em;} #msgfmt {font-size: 16px; font-weight: normal;}#status {font-size: 16px; font-weight: normal;}</style></head><center><br><br><br><br><br><p id=\"status\"><div id='loader'></div><br>Config saved<br>Rebooting</p></center></html>";
     res->setHeader("Content-Type", "text/html");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->setHeader("Content-Length", String(output.length()).c_str());
     res->println(output.c_str());
     delay(1000);
@@ -587,8 +569,6 @@ void handleConfig(HTTPRequest *req, HTTPResponse *res)
     }
     String output = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>Config Editor</title><style type=\"text/css\">body {background-color: #1451AE; color: #ffffff; font-size: 14px;font-weight: bold;margin: 0 0 0 0.0;padding: 0.4em 0.4em 0.4em 0.6em;}input[type=\"submit\"]:hover {background: #ffffff;color: green;}input[type=\"submit\"]:active{outline-color: green;color: green;background: #ffffff; }table {font-family: arial, sans-serif;border-collapse: collapse;}td {border: 1px solid #dddddd;text-align: left;padding: 8px;}th {border: 1px solid #dddddd; background-color:gray;text-align: center;padding: 8px;}</style></head><body><form action=\"/config.html\" method=\"post\"><center><table><tr><th colspan=\"2\"><center>Access Point</center></th></tr><tr><td>AP SSID:</td><td><input name=\"ap_ssid\" value=\"" + AP_SSID + "\"></td></tr><tr><td>AP PASSWORD:</td><td><input name=\"ap_pass\" value=\"********\"></td></tr><tr><td>AP IP:</td><td><input name=\"web_ip\" value=\"" + Server_IP.toString() + "\"></td></tr><tr><td>SUBNET MASK:</td><td><input name=\"subnet\" value=\"" + Subnet_Mask.toString() + "\"></td></tr><tr><td>START AP:</td><td><input type=\"checkbox\" name=\"useap\" " + tmpUa + "></td></tr><tr><th colspan=\"2\"><center>Wifi Connection</center></th></tr><tr><td>WIFI SSID:</td><td><input name=\"wifi_ssid\" value=\"" + WIFI_SSID + "\"></td></tr><tr><td>WIFI PASSWORD:</td><td><input name=\"wifi_pass\" value=\"********\"></td></tr><tr><td>WIFI HOSTNAME:</td><td><input name=\"wifi_host\" value=\"" + WIFI_HOSTNAME + "\"></td></tr><tr><td>CONNECT WIFI:</td><td><input type=\"checkbox\" name=\"usewifi\" " + tmpCw + "></tr><tr><th colspan=\"2\"><center>Auto USB Wait</center></th></tr><tr><td>WAIT TIME(ms):</td><td><input name=\"usbwait\" value=\"" + USB_WAIT + "\"></td></tr></table><br><input id=\"savecfg\" type=\"submit\" value=\"Save Config\"></center></form></body></html>";
     res->setHeader("Content-Type", "text/html");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->setHeader("Content-Length", String(output.length()).c_str());
     res->println(output.c_str());
   }
@@ -635,8 +615,6 @@ void handleCacheManifest(HTTPRequest *req, HTTPResponse *res) {
     output += "style.css\r\n";
   }
    res->setHeader("Content-Type", "text/cache-manifest");
-   res->setStatusCode(200);
-   res->setStatusText("OK");
    res->setHeader("Content-Length", String(output.length()).c_str());
    res->println(output.c_str());
   #else
@@ -653,8 +631,6 @@ void sendwebmsg(HTTPRequest *req, HTTPResponse *res, String htmMsg)
 {
    String output = "<!DOCTYPE html><html><head><style type=\"text/css\">body {background-color: #1451AE; color: #ffffff; font-size: 20px; font-weight: bold; margin: 0 0 0 0.0; padding: 0.4em 0.4em 0.4em 0.6em;}</style></head><center><br><br><br><br><br><br>" + htmMsg + "</center></html>";
    res->setHeader("Content-Type", "text/html");
-   res->setStatusCode(200);
-   res->setStatusText("OK");
    res->setHeader("Content-Length", String(output.length()).c_str());
    res->println(output.c_str());
 }
@@ -689,8 +665,6 @@ void handleFwUpdate(HTTPRequest *req, HTTPResponse *res) {
         //HWSerial.printf("Update Success: %uB\n", fileLength);
         String output = "<!DOCTYPE html><html><head><meta http-equiv=\"refresh\" content=\"8; url=/info.html\"><style type=\"text/css\">body {background-color: #1451AE; color: #ffffff; font-size: 20px; font-weight: bold; margin: 0 0 0 0.0; padding: 0.4em 0.4em 0.4em 0.6em;}</style></head><center><br><br><br><br><br><br>Update Success, Rebooting.</center></html>";
         res->setHeader("Content-Type", "text/html");
-        res->setStatusCode(200);
-        res->setStatusText("OK");
         res->setHeader("Content-Length", String(output.length()).c_str());
         res->println(output.c_str());
         delay(1000);
@@ -705,8 +679,6 @@ void handleFwUpdate(HTTPRequest *req, HTTPResponse *res) {
   }else{
     res->setHeader("Content-Type", "text/html");
     res->setHeader("Content-Encoding", "gzip");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->write(update_gz, sizeof(update_gz));
   }
 }
@@ -796,8 +768,6 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
   {
     String output = "Microsoft Connect Test";
     res->setHeader("Content-Type", "text/plain");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->setHeader("Content-Length", String(output.length()).c_str());
     res->println(output.c_str());
     return;
@@ -835,8 +805,6 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
   {
     res->setHeader("Content-Type", dataType.c_str());
     res->setHeader("Content-Encoding", "gzip");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->write(jzip_gz, sizeof(jzip_gz));
     return;
   }
@@ -858,8 +826,6 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     
     res->setHeader("Content-Type", dataType.c_str());
     res->setHeader("Content-Encoding", "gzip");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->write(admin_gz, sizeof(admin_gz));
     return;
   }
@@ -893,8 +859,6 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     enableUSB();
     String output = "ok";
     res->setHeader("Content-Type", "text/plain");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->setHeader("Content-Length", String(output.length()).c_str());
     res->println(output.c_str());
     return;
@@ -904,8 +868,6 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
   {
     String output = "ok";
     res->setHeader("Content-Type", "text/plain");
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->setHeader("Content-Length", String(output.length()).c_str());
     res->println(output.c_str());
     disableUSB();
@@ -931,8 +893,6 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     File dataFile = FILESYS.open(path, "r");
     int filesize = dataFile.size();
     res->setHeader("Content-Type", dataType.c_str());
-    res->setStatusCode(200);
-    res->setStatusText("OK");
     res->setHeader("Content-Length", String(filesize).c_str());
     if(isGzip){
       res->setHeader("Content-Encoding", "gzip");
@@ -955,8 +915,6 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     {
       res->setHeader("Content-Type", dataType.c_str());
       res->setHeader("Content-Encoding", "gzip");
-      res->setStatusCode(200);
-      res->setStatusText("OK");
       res->write(index_gz, sizeof(index_gz));
       return;
     }
@@ -972,8 +930,6 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     {
       res->setHeader("Content-Type", dataType.c_str());
       res->setHeader("Content-Encoding", "gzip");
-      res->setStatusCode(200);
-      res->setStatusText("OK");
       res->write(menu_gz, sizeof(menu_gz));
       return;
     }
@@ -983,8 +939,6 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     {
       res->setHeader("Content-Type", dataType.c_str());
       res->setHeader("Content-Encoding", "gzip");
-      res->setStatusCode(200);
-      res->setStatusText("OK");
       res->write(style_gz, sizeof(style_gz));
       return;
     }
@@ -999,10 +953,10 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
 
 void handleHTTPS(HTTPRequest *req, HTTPResponse *res)
 {
-  std::string serverIP = Server_IP.toString().c_str();
+  std::string serverHost = WIFI_HOSTNAME.c_str();
   res->setStatusCode(301);
   res->setStatusText("Moved Permanently");
-  res->setHeader("Location", "http://" + serverIP + "/index.html");
+  res->setHeader("Location", "http://" + serverHost + "/index.html");
 }
 
 
@@ -1263,10 +1217,7 @@ void setup()
 #if defined(CONFIG_IDF_TARGET_ESP32S2) | defined(CONFIG_IDF_TARGET_ESP32S3)
 static int32_t onRead(uint32_t lba, uint32_t offset, void *buffer, uint32_t bufsize)
 {
-  if (lba > 4)
-  {
-    lba = 4;
-  }
+  if (lba > 4){lba = 4;}
   memcpy(buffer, exfathax[lba] + offset, bufsize);
   return bufsize;
 }
