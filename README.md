@@ -7,9 +7,9 @@ This is a project designed for the <a href=https://www.espressif.com/en/products
 
 ## Libraries
 
-the project is built using <b><a href=https://github.com/fhessel/esp32_https_server>ESP32 HTTPS Server</a></b> so you need to add this library to arduino.
+the project is built using <b><a href=https://github.com/stooged/esp32_https_server>ESP32 HTTPS Server</a></b> so you need to add this library to arduino.
 
-<a href=https://github.com/fhessel/esp32_https_server>ESP32 HTTPS Server</a><br>
+<a href=https://github.com/stooged/esp32_https_server>ESP32 HTTPS Server</a><br>
 
 <br>
 
