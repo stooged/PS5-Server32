@@ -1,6 +1,6 @@
 # PS5-Server32
  
-This is a project designed for the <a href=https://www.espressif.com/en/products/socs/esp32-s2>ESP32-S2</a>, *<a href=https://www.espressif.com/en/products/socs/esp32-s3>ESP32-S3</a> and <a href=https://www.espressif.com/en/products/socs/esp32>ESP32</a> boards to provide a wifi http(s) server, dns server.
+This is a project designed for the <a href=https://www.espressif.com/en/products/socs/esp32-s2>ESP32-S2</a>, <a href=https://www.espressif.com/en/products/socs/esp32-s3>ESP32-S3</a> and <a href=https://www.espressif.com/en/products/socs/esp32>ESP32</a> boards to provide a wifi http(s) server, dns server.
 
 <br>
 
@@ -56,8 +56,6 @@ the files uploaded using this method are found in the <b>data</b> folder inside 
 ## Internal pages
 
 * <b>admin.html</b> - the main landing page for administration.
-
-* <b>index.html</b> - if no index.html is found the server will generate a simple index page and list the payloads automatically.
 
 * <b>info.html</b> - provides information about the esp board.
 
