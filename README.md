@@ -4,7 +4,7 @@ This is a project designed for the <a href=https://www.espressif.com/en/products
 
 <br>
 
-it is for the <a href=https://github.com/ChendoChap/pOOBs4>PS4 9.00 OOB Exploit</a>.
+it is for the <a href=https://github.com/Cryptogenic/PS5-4.03-Kernel-Exploit>PS5 4.03 Kernel Exploit</a>.
 
 <br>
 
