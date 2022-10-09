@@ -1,6 +1,6 @@
 class rop {
 
-    constructor(stack_size = 0x40000, reserved_stack = 0x10000) {
+    constructor(stack_size = 0x80000, reserved_stack = 0x10000) {
         this.stack_size = stack_size;
         this.reserved_stack = reserved_stack;
         this.stack_dwords = stack_size / 0x4;
@@ -65,6 +65,17 @@ class rop {
      */
     push(value) {
         this.set_entry(this.increment_stack(), value);
+    }
+
+    /**
+     * performs `*dest = value;` in chain
+     */
+    push_write4(dest, value) {
+        this.push(gadgets["pop rdi"]);
+        this.push(dest);
+        this.push(gadgets["pop rax"]);
+        this.push(value);
+        this.push(gadgets["mov [rdi], eax"]);
     }
 
     /**
@@ -184,6 +195,21 @@ class rop {
     }
 
     /**
+     * performs `*dest = *dest + value;` in chain
+     */
+    push_inc8(dest, value) {
+        this.push(gadgets["pop rdi"]);
+        this.push(dest);
+        this.push(gadgets["pop rax"]);
+        this.push(dest);
+        this.push(gadgets["mov rax, [rax]"]);
+        this.push(gadgets["pop rdx"]);
+        this.push(value);
+        this.push(gadgets["add rax, rdx"]);
+        this.push(gadgets["mov [rdi], rax"]);
+    }
+
+    /**
      * returns the next available branch
      */
     get_branch() {
@@ -279,6 +305,15 @@ class worker_rop extends rop {
 
     async syscall(sysc, rdi, rsi, rdx, rcx, r8, r9) {
         return await this.call(syscalls[sysc], rdi, rsi, rdx, rcx, r8, r9);
+    }
+
+    async add_syscall(sysc, rdi, rsi, rdx, rcx, r8, r9) {
+        this.fcall(syscalls[sysc], rdi, rsi, rdx, rcx, r8, r9);
+    }
+
+    async add_syscall_ret(retstore, sysc, rdi, rsi, rdx, rcx, r8, r9) {
+        this.fcall(syscalls[sysc], rdi, rsi, rdx, rcx, r8, r9);
+        this.write_result(retstore);
     }
 
     async run() {
