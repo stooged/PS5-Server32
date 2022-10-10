@@ -635,6 +635,36 @@ void handleFwUpdate(HTTPRequest *req, HTTPResponse *res) {
 }
 
 
+void handleElfload(HTTPRequest *req, HTTPResponse *res, String fileName)
+{
+  WiFiClient client;
+  if (!client.connect(req->getClientIP(), 9020)) {
+    delay(1000);
+    res->setStatusCode(500);
+    res->setStatusText("Internal Server Error");
+    res->setHeader("Content-Type", "text/plain");
+    res->println("Internal Server Error");
+  }
+  else
+  {
+     delay(1000);
+     File dataFile = FILESYS.open(fileName, "r");
+     if (dataFile) {
+       while (dataFile.available()) {
+         client.write(dataFile.read());
+       }
+    dataFile.close(); 
+  }
+  client.stop();
+  res->setStatusCode(200);
+  res->setStatusText("OK");
+  res->setHeader("Content-Type", "text/plain");
+  res->println("OK");
+  }
+}
+
+
+
 void handleHTTP(HTTPRequest *req, HTTPResponse *res)
 {
   String path = req->getRequestString().c_str();
