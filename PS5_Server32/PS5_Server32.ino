@@ -201,7 +201,7 @@ void handlePayloads(HTTPRequest *req, HTTPResponse *res)
       fnamev.replace(".elf", "");
       output += ",{\r\n";
       output += "displayTitle: '" + fnamev + "',\r\n";
-      output += "description: '" + fnamev + "',\r\n";  
+      output += "description: '" + fname + "',\r\n";  
       output += "fileName: '" + fname + "',\r\n";
       output += "author: '',\r\n";
       output += "source: '',\r\n";
