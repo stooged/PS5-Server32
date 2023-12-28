@@ -4,7 +4,10 @@ This is a project designed for the <a href=https://www.espressif.com/en/products
 
 <br>
 
-it is for the <a href=https://github.com/Cryptogenic/PS5-4.03-Kernel-Exploit>PS5 4.03 Kernel Exploit</a>.
+it is for the <a href=https://github.com/Cryptogenic/PS5-IPV6-Kernel-Exploit>PS5 3.xx / 4.xx Kernel Exploit</a>.
+
+using this fork of the exploit <a href=https://github.com/idlesauce/PS5-Exploit-Host>PS5 3.xx / 4.xx Kernel Exploit</a> by idlesauce.
+
 
 <br>
 

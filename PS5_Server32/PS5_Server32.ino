@@ -12,6 +12,11 @@
 #include <Update.h>
 #include <DNSServer.h>
 #include "jzip.h"
+#include "etahen.h"
+#include "offsets.h"
+#include "exploit.h"
+
+
 
 #if defined(CONFIG_IDF_TARGET_ESP32S2) | defined(CONFIG_IDF_TARGET_ESP32S3) | defined(CONFIG_IDF_TARGET_ESP32) 
 #else
@@ -81,12 +86,15 @@ String firmwareVer = "1.00";
 DNSServer dnsServer;
 using namespace httpsserver;
 SSLCert *cert;
+
 HTTPSServer *secureServer;
 HTTPServer insecureServer = HTTPServer();
+
 boolean hasEnabled = false;
 boolean isFormating = false;
 boolean isRebooting = false;
 File upFile;
+
 
 
 String split(String str, String from, String to)
@@ -161,6 +169,54 @@ String urlencode(String str)
 }
 
 
+void handlePayloads(HTTPRequest *req, HTTPResponse *res)
+{
+  String output = "const payload_map =\r\n[";
+  output += "{\r\n";
+  output += "displayTitle: 'etaHEN',\r\n"; //internal etahen bin
+  output += "description: 'Runs With 3.xx and 4.xx. FPKG enabler For FW 4.03-4.51 Only.',\r\n";  
+  output += "fileName: 'ethen.bin',\r\n";
+  output += "author: 'LightningMods_, sleirsgoevy, ChendoChap, astrelsky, illusion',\r\n";
+  output += "source: 'https://github.com/LightningMods/etaHEN',\r\n";
+  output += "version: '1.2 beta'\r\n}\r\n";
+  
+  File dir = FILESYS.open("/");
+  while (dir)
+  {
+    File file = dir.openNextFile();
+    if (!file)
+    {
+      dir.close();
+      break;
+    }
+    String fname = String(file.name());
+    if (fname.endsWith(".gz"))
+    {
+      fname = fname.substring(0, fname.length() - 3);
+    }
+    if (fname.length() > 0 && !file.isDirectory() && fname.endsWith(".bin") || fname.endsWith(".elf"))
+    {
+      String fnamev = fname;
+      fnamev.replace(".bin", "");
+      fnamev.replace(".elf", "");
+      output += ",{\r\n";
+      output += "displayTitle: '" + fnamev + "',\r\n";
+      output += "description: '" + fnamev + "',\r\n";  
+      output += "fileName: '" + fname + "',\r\n";
+      output += "author: '',\r\n";
+      output += "source: '',\r\n";
+      output += "version: '1'\r\n}\r\n";
+    }
+    file.close();
+  }
+  output += "\r\n];";
+  res->setHeader("Content-Type", "application/javascript");
+  res->setHeader("Content-Length", String(output.length()).c_str());
+  res->println(output.c_str());
+}
+
+
+
 void handleFileMan(HTTPRequest *req, HTTPResponse *res)
 {
   File dir = FILESYS.open("/");
@@ -228,51 +284,6 @@ void handleDlFiles(HTTPRequest *req, HTTPResponse *res)
   {
     output += "]; async function dlAll(){var zip = new JSZip();for (var i = 0; i < filelist.length; i++) {if (filelist[i] != ''){var xhr = new XMLHttpRequest();xhr.open('GET',filelist[i],false);xhr.overrideMimeType('text/plain; charset=x-user-defined'); xhr.onload = function(e) {if (this.status == 200) {zip.file(filelist[i], this.response,{binary: true});}};xhr.send();document.getElementById('fp').innerHTML = 'Adding: ' + filelist[i];await new Promise(r => setTimeout(r, 50));}}document.getElementById('gen').style.display = 'none';document.getElementById('comp').style.display = 'block';zip.generateAsync({type:'blob'}).then(function(content) {saveAs(content,'esp_files.zip');});}</script></head><body onload='setTimeout(dlAll,100);'><center><br><br><br><br><div id='gen' style='display:block;'><div id='loader'></div><br><br>Generating ZIP<br><p id='fp'></p></div><div id='comp' style='display:none;'><br><br><br><br>Complete<br><br>Downloading: esp_files.zip</div></center></body></html>";
   }
-  res->setHeader("Content-Type", "text/html");
-  res->setHeader("Content-Length", String(output.length()).c_str());
-  res->println(output.c_str());
-}
-
-
-void handlePayloads(HTTPRequest *req, HTTPResponse *res)
-{
-  File dir = FILESYS.open("/");
-  String output = "<!DOCTYPE html><html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>ESP Server</title><link rel=\"stylesheet\" href=\"style.css\"><style>body { background-color: #1451AE; color: #ffffff; font-size: 14px; font-weight: bold; margin: 0 0 0 0.0; overflow-y:hidden; text-shadow: 3px 2px DodgerBlue;}</style><script>function setpayload(payload,title,waittime){ sessionStorage.setItem('payload', payload); sessionStorage.setItem('title', title); sessionStorage.setItem('waittime', waittime);  window.open('loader.html', '_self');}</script></head><body><center><h1>PS5 Payloads</h1>";
-  int cntr = 0;
-  int payloadCount = 0;
-  while (dir)
-  {
-    File file = dir.openNextFile();
-    if (!file)
-    {
-      dir.close();
-      break;
-    }
-    String fname = String(file.name());
-    if (fname.endsWith(".gz"))
-    {
-      fname = fname.substring(0, fname.length() - 3);
-    }
-    if (fname.length() > 0 && fname.endsWith(".bin") && !file.isDirectory())
-    {
-      payloadCount++;
-      String fnamev = fname;
-      fnamev.replace(".bin", "");
-      output += "<a onclick=\"setpayload('" + urlencode(fname) + "','" + fnamev + "','10000')\"><button class=\"btn\">" + fnamev + "</button></a>&nbsp;";
-      cntr++;
-      if (cntr == 4)
-      {
-        cntr = 0;
-        output += "<p></p>";
-      }
-    }
-    file.close();
-  }
-  if (payloadCount == 0)
-  {
-    output += "<msg>No .bin payloads found<br>You need to upload the payloads to the ESP32 board.<br>in the arduino ide select <b>Tools</b> &gt; <b>ESP32 Sketch Data Upload</b><br>or<br>Using a pc/laptop connect to <b>" + AP_SSID + "</b> and navigate to <a href=\"/admin.html\"><u>http://" + WIFI_HOSTNAME + "/admin.html</u></a> and upload the .bin payloads using the <b>File Uploader</b></msg></center></body></html>";
-  }
-  output += "</center></body></html>";
   res->setHeader("Content-Type", "text/html");
   res->setHeader("Content-Length", String(output.length()).c_str());
   res->println(output.c_str());
@@ -545,7 +556,7 @@ void handleConfig(HTTPRequest *req, HTTPResponse *res)
 #endif
 
 
-
+/*
 void handleCacheManifest(HTTPRequest *req, HTTPResponse *res) {
 
   String output = "CACHE MANIFEST\r\n";
@@ -575,7 +586,7 @@ void handleCacheManifest(HTTPRequest *req, HTTPResponse *res) {
    res->setHeader("Content-Length", String(output.length()).c_str());
    res->println(output.c_str());
 }
-
+*/
 
 
 void sendwebmsg(HTTPRequest *req, HTTPResponse *res, String htmMsg)
@@ -635,35 +646,45 @@ void handleFwUpdate(HTTPRequest *req, HTTPResponse *res) {
 }
 
 
-void handleElfload(HTTPRequest *req, HTTPResponse *res, String fileName)
+/*
+void sendPayload(HTTPRequest *req, HTTPResponse *res, String fileName, int port)
 {
+  //Serial.println("Sending: " + fileName);
+
   WiFiClient client;
-  if (!client.connect(req->getClientIP(), 9020)) {
+  if (!client.connect(req->getClientIP(), port)) {
     delay(1000);
     res->setStatusCode(500);
     res->setStatusText("Internal Server Error");
     res->setHeader("Content-Type", "text/plain");
     res->println("Internal Server Error");
+    //Serial.println("failed to connect");
   }
   else
   {
      delay(1000);
      File dataFile = FILESYS.open(fileName, "r");
      if (dataFile) {
-       while (dataFile.available()) {
-         client.write(dataFile.read());
-       }
-    dataFile.close(); 
+       long filelen = dataFile.available();
+       char* psdRamBuffer = (char*)ps_malloc(filelen);
+       dataFile.readBytes(psdRamBuffer, filelen);
+       dataFile.close(); 
+       client.write(psdRamBuffer, filelen);
+       free(psdRamBuffer);
+  }
+  else
+  {
+    //Serial.println("file not found");
   }
   client.stop();
+  //Serial.println("Sent");
   res->setStatusCode(200);
   res->setStatusText("OK");
   res->setHeader("Content-Type", "text/plain");
   res->println("OK");
   }
 }
-
-
+*/
 
 void handleHTTP(HTTPRequest *req, HTTPResponse *res)
 {
@@ -764,9 +785,11 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
 #endif
 
 
-  if (path.endsWith("/cache.manifest"))
+  if (path.endsWith("/index.html"))
   {
-    handleCacheManifest(req, res);
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(index_gz, sizeof(index_gz));
     return;
   }
 
@@ -789,6 +812,153 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     res->write(jzip_gz, sizeof(jzip_gz));
     return;
   }
+
+
+  if (path.endsWith("/3.00.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(o3_00_gz, sizeof(o3_00_gz));
+    return;
+  }
+
+  if (path.endsWith("/3.10.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(o3_10_gz, sizeof(o3_10_gz));
+    return;
+  }
+
+    if (path.endsWith("/3.20.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(o3_20_gz, sizeof(o3_20_gz));
+    return;
+  }
+
+    if (path.endsWith("/3.21.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(o3_21_gz, sizeof(o3_21_gz));
+    return;
+  }
+
+    if (path.endsWith("/4.00.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(o4_00_gz, sizeof(o4_00_gz));
+    return;
+  }
+
+    if (path.endsWith("/4.02.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(o4_02_gz, sizeof(o4_02_gz));
+    return;
+  }
+
+    if (path.endsWith("/4.03.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(o4_03_gz, sizeof(o4_03_gz));
+    return;
+  }
+
+    if (path.endsWith("/4.50.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(o4_50_gz, sizeof(o4_50_gz));
+    return;
+  }
+
+    if (path.endsWith("/4.51.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(o4_51_gz, sizeof(o4_51_gz));
+    return;
+  }
+
+
+  if (path.endsWith("/custom_host_stuff.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(custom_host_stuff_gz, sizeof(custom_host_stuff_gz));
+    return;
+  }
+
+  if (path.endsWith("/exploit.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(exploit_gz, sizeof(exploit_gz));
+    return;
+  }
+
+  if (path.endsWith("/int64.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(int64_gz, sizeof(int64_gz));
+    return;
+  }
+
+  if (path.endsWith("/main.css"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(main_gz, sizeof(main_gz));
+    return;
+  }
+
+  if (path.endsWith("/rop.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(rop_gz, sizeof(rop_gz));
+    return;
+  }
+
+  if (path.endsWith("/rop_slave.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(rop_slave_gz, sizeof(rop_slave_gz));
+    return;
+  }
+
+  if (path.endsWith("/webkit.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(webkit_gz, sizeof(webkit_gz));
+    return;
+  }
+
+
+  if (path.endsWith("/ethen.bin"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(etahen, sizeof(etahen));
+    return;
+  }
+
+
+  if (path.endsWith("/payload_map.js"))
+  {
+    handlePayloads(req, res);
+    return;
+  }
+
 
   if (path.endsWith("/info.html"))
   {
@@ -834,8 +1004,19 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     handleFormat(req, res);
     return;
   }
+/*
+  if (path.endsWith(".bin"))
+  {
+    sendPayload(req, res, path, 9020);
+    return;
+  }
 
-
+  if (path.endsWith(".elf"))
+  {
+    sendPayload(req, res, path, 9027);
+    return;
+  }
+*/
   bool isGzip = false;
   bool fileFound = false;
 
@@ -943,9 +1124,7 @@ void setup()
 {
   //Serial.begin(115200);
   //Serial.println("Version: " + firmwareVer);
-
-
-
+  
 #if USESD
   SPI.begin(SCK, MISO, MOSI, SS);
   if (FILESYS.begin(SS, SPI))
@@ -1138,7 +1317,6 @@ void setup()
     }
   }
 
-
   secureServer = new HTTPSServer(cert);
 
   ResourceNode *nhttp = new ResourceNode("", "ANY", &handleHTTP);
@@ -1161,6 +1339,7 @@ void setup()
 
 void loop()
 {
+
   dnsServer.processNextRequest();
   secureServer->loop();
   insecureServer.loop();
