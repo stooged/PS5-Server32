@@ -15,6 +15,7 @@
 #include "etahen.h"
 #include "offsets.h"
 #include "exploit.h"
+#include "module.h"
 
 
 
@@ -886,6 +887,53 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     return;
   }
 
+  if (path.endsWith("/module/int64.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(int64m_gz, sizeof(int64m_gz));
+    return;
+  }
+
+  if (path.endsWith("/module/utils.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(utils_gz, sizeof(utils_gz));
+    return;
+  }
+
+  if (path.endsWith("/module/constants.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(constants_gz, sizeof(constants_gz));
+    return;
+  }
+
+  if (path.endsWith("/module/mem.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(mem_gz, sizeof(mem_gz));
+    return;
+  }
+
+  if (path.endsWith("/module/memtools.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(memtools_gz, sizeof(memtools_gz));
+    return;
+  }
+
+  if (path.endsWith("/module/rw.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(rw_gz, sizeof(rw_gz));
+    return;
+  }
 
   if (path.endsWith("/custom_host_stuff.js"))
   {
@@ -935,15 +983,24 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     return;
   }
 
-  if (path.endsWith("/webkit.js"))
+  if (path.endsWith("/webkit_psfree.js"))
   {
     res->setHeader("Content-Type", dataType.c_str());
     res->setHeader("Content-Encoding", "gzip");
-    res->write(webkit_gz, sizeof(webkit_gz));
+    res->write(webkit_psfree_gz, sizeof(webkit_psfree_gz));
     return;
   }
 
 
+  if (path.endsWith("/webkit_fontface.js"))
+  {
+    res->setHeader("Content-Type", dataType.c_str());
+    res->setHeader("Content-Encoding", "gzip");
+    res->write(webkit_fontface_gz, sizeof(webkit_fontface_gz));
+    return;
+  }
+
+  
   if (path.endsWith("/ethen.bin"))
   {
     res->setHeader("Content-Type", dataType.c_str());
