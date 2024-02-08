@@ -12,11 +12,8 @@
 #include <Update.h>
 #include <DNSServer.h>
 #include "jzip.h"
-#include "etahen.h"
 #include "offsets.h"
-#include "exploit.h"
 #include "module.h"
-
 
 
 #if defined(CONFIG_IDF_TARGET_ESP32S2) | defined(CONFIG_IDF_TARGET_ESP32S3) | defined(CONFIG_IDF_TARGET_ESP32) 
@@ -36,6 +33,18 @@
 #define USELFS false // LITTLEFS will be used instead of SPIFFS for the storage filesystem.
                      // you must select a partition scheme labeled with "SPIFFS" with this enabled and USEFAT must be false.
 
+                     // enable internal etahen.h [ true / false ]
+#define INTHEN true  // etahen is placed in the app partition to free up space on the storage for other payloads. \
+                     // with this enabled you do not upload etahen to the board, set this to false if you wish to upload etahen.
+
+                      // enable autohen [ true / false ]
+#define AUTOHEN false // this will load etaHen instead of the normal index/payload selection page, use this if you only want hen and no other payloads.
+                      // pressing R2 on the controller will stop the auto load and allow you to select between the psfree and fontface exploits.
+                      // if you wish to update the etaHen payload name it "etahen.bin" and upload it to the board storage to override the internal copy. 
+
+
+#include "etahen.h"  
+#include "exploit.h"
 #if USESD
 #include "SD.h"
 #include "SPI.h"
@@ -176,7 +185,7 @@ void handlePayloads(HTTPRequest *req, HTTPResponse *res)
   output += "{\r\n";
   output += "displayTitle: 'etaHEN',\r\n"; //internal etahen bin
   output += "description: 'Runs With 3.xx and 4.xx. FPKG enabler For FW 3.xx / 4.03-4.51 Only.',\r\n";  
-  output += "fileName: 'ethen.bin',\r\n";
+  output += "fileName: 'etahen.bin',\r\n";
   output += "author: 'LightningMods_, sleirsgoevy, ChendoChap, astrelsky, illusion',\r\n";
   output += "source: 'https://github.com/LightningMods/etaHEN',\r\n";
   output += "version: 'v1.3 beta'\r\n}\r\n";
@@ -647,45 +656,6 @@ void handleFwUpdate(HTTPRequest *req, HTTPResponse *res) {
 }
 
 
-/*
-void sendPayload(HTTPRequest *req, HTTPResponse *res, String fileName, int port)
-{
-  //Serial.println("Sending: " + fileName);
-
-  WiFiClient client;
-  if (!client.connect(req->getClientIP(), port)) {
-    delay(1000);
-    res->setStatusCode(500);
-    res->setStatusText("Internal Server Error");
-    res->setHeader("Content-Type", "text/plain");
-    res->println("Internal Server Error");
-    //Serial.println("failed to connect");
-  }
-  else
-  {
-     delay(1000);
-     File dataFile = FILESYS.open(fileName, "r");
-     if (dataFile) {
-       long filelen = dataFile.available();
-       char* psdRamBuffer = (char*)ps_malloc(filelen);
-       dataFile.readBytes(psdRamBuffer, filelen);
-       dataFile.close(); 
-       client.write(psdRamBuffer, filelen);
-       free(psdRamBuffer);
-  }
-  else
-  {
-    //Serial.println("file not found");
-  }
-  client.stop();
-  //Serial.println("Sent");
-  res->setStatusCode(200);
-  res->setStatusText("OK");
-  res->setHeader("Content-Type", "text/plain");
-  res->println("OK");
-  }
-}
-*/
 
 void handleHTTP(HTTPRequest *req, HTTPResponse *res)
 {
@@ -1001,15 +971,7 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
   }
 
   
-  if (path.endsWith("/ethen.bin"))
-  {
-    res->setHeader("Content-Type", dataType.c_str());
-    res->setHeader("Content-Encoding", "gzip");
-    res->write(etahen, sizeof(etahen));
-    return;
-  }
-
-
+  
   if (path.endsWith("/payload_map.js"))
   {
     handlePayloads(req, res);
@@ -1061,19 +1023,8 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
     handleFormat(req, res);
     return;
   }
-/*
-  if (path.endsWith(".bin"))
-  {
-    sendPayload(req, res, path, 9020);
-    return;
-  }
 
-  if (path.endsWith(".elf"))
-  {
-    sendPayload(req, res, path, 9027);
-    return;
-  }
-*/
+
   bool isGzip = false;
   bool fileFound = false;
 
@@ -1118,7 +1069,17 @@ void handleHTTP(HTTPRequest *req, HTTPResponse *res)
       res->write(style_gz, sizeof(style_gz));
       return;
     }
-
+	
+#if INTHEN	
+    if (path.endsWith("/etahen.bin"))
+    {
+      res->setHeader("Content-Type", dataType.c_str());
+      res->setHeader("Content-Encoding", "gzip");
+      res->write(etahen_gz, sizeof(etahen_gz));
+      return;
+    }
+#endif
+  
     res->setStatusCode(404);
     res->setStatusText("Not Found");
     res->setHeader("Content-Type", "text/plain");
