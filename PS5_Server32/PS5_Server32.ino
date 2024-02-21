@@ -25,6 +25,10 @@
 #define USESD false // a FAT32 formatted SD Card will be used instead of the onboard flash for the storage.
                     // this requires a board with a sd card slot or a sd card connected.
 
+                        // use the T-Dongle-S3 SD Card [ true / false ]
+#define USELILYSD false // a FAT32 formatted SD Card will be used instead of the onboard flash for the storage.
+                        // this requires a LilyGO T-Dongle-S3 to be used with a sd card inserted.
+
                      // use FatFS not SPIFFS [ true / false ]
 #define USEFAT false // FatFS will be used instead of SPIFFS for the storage filesystem or for larger partitons on boards with more than 4mb flash.
                      // you must select a partition scheme labeled with "FAT" or "FATFS" with this enabled.
@@ -43,6 +47,9 @@
                       // if you wish to update the etaHen payload name it "etahen.bin" and upload it to the board storage to override the internal copy. 
 
 
+
+
+
 #include "etahen.h"  
 #include "exploit.h"
 #if USESD
@@ -53,6 +60,15 @@
 #define MOSI 11 // you may need to change these for other boards
 #define SS 10
 #define FILESYS SD
+#elif USELILYSD
+#include "SD_MMC.h"
+#define SD0 14
+#define SD1 17 // pins for the LilyGO T-Dongle-S3 sd card
+#define SD2 21 // do not change these values
+#define SD3 18 // the sd card slot is located in the usb A end of the dongle
+#define CLK 12
+#define CMD 16
+#define FILESYS SD_MMC
 #else
 #if USEFAT
 #include "FFat.h"
@@ -353,7 +369,7 @@ void handleInfo(HTTPRequest *req, HTTPResponse *res)
   output += "Flash frequency: " + String(flashFreq) + " MHz<br>";
   output += "Flash write mode: " + String((ideMode == FM_QIO ? "QIO" : ideMode == FM_QOUT ? "QOUT": ideMode == FM_DIO    ? "DIO": ideMode == FM_DOUT   ? "DOUT": "UNKNOWN")) + "<br><hr>";
   output += "###### Storage information ######<br><br>";
-#if USESD
+#if USESD || USELILYSD
   output += "Storage Device: SD<br>";
 #elif USEFAT
   output += "Filesystem: FatFs<br>";
@@ -1147,6 +1163,10 @@ void setup()
   SPI.begin(SCK, MISO, MOSI, SS);
   if (FILESYS.begin(SS, SPI))
   {
+#elif USELILYSD
+  SD_MMC.setPins(CLK, CMD, SD0, SD1, SD2, SD3);
+  if (FILESYS.begin())
+  {
 #else
   if (FILESYS.begin(true))
   {
@@ -1368,7 +1388,7 @@ void loop()
     isRebooting = false;
     ESP.restart();
   }
-#if !USESD
+#if !USESD && !USELILYSD
   if (isFormating)
   {
     //Serial.print("Formatting Storage");

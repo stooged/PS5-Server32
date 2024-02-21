@@ -6,7 +6,7 @@ This is a project designed for the <a href=https://www.espressif.com/en/products
 
 it is for the <a href=https://github.com/Cryptogenic/PS5-IPV6-Kernel-Exploit>PS5 3.xx / 4.xx Kernel Exploit</a>.
 
-using this fork of the exploit <a href=https://github.com/idlesauce/PS5-Exploit-Host>PS5 3.xx / 4.xx Kernel Exploit</a> by idlesauce.
+using this fork of the exploit <a href=https://github.com/idlesauce/PS5-Exploit-Host>PS5 3.xx / 4.xx Kernel Exploit</a> by idlesauce and <a href=https://github.com/LightningMods/etaHEN>etaHEN</a> by LightningMods.
 
 
 <br>
