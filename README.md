@@ -12,6 +12,14 @@ using this fork of the exploit <a href=https://github.com/idlesauce/PS5-Exploit-
 <br>
 
 
+## Dongles
+these dongles have been tested and work, they are a great way to have a compact exploit tool<br>
+<br>
+<a href=https://www.lilygo.cc/products/t-dongle-s3>LILYGO T-Dongle-S3</a><br>
+<a href=https://www.aliexpress.com/i/1005005244896472.html>ESP32-S2 Dongle</a><br>
+<img src=https://github.com/stooged/PS5-Server32/blob/main/Images/dongle.jpg><br>
+
+
 ## Libraries
 
 the project is built using <b><a href=https://github.com/stooged/esp32_https_server>ESP32 HTTPS Server</a></b> so you need to add this library to arduino.
