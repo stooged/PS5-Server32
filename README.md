@@ -17,7 +17,7 @@ these dongles have been tested and work, they are a great way to have a compact 
 <br>
 <a href=https://www.lilygo.cc/products/t-dongle-s3>LILYGO T-Dongle-S3</a><br>
 <a href=https://www.aliexpress.com/i/1005005244896472.html>ESP32-S2 Dongle</a><br>
-<img src=https://github.com/stooged/PS5-Server32/blob/main/Images/dongle.jpg><br>
+<img src=https://github.com/stooged/PS5-Server32/blob/main/images/dongle.jpg><br>
 
 
 ## Libraries
