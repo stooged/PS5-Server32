@@ -1164,7 +1164,7 @@ void setup()
   if (FILESYS.begin(SS, SPI))
   {
 #elif USELILYSD
-  SD_MMC.setPins(CLK, CMD, SD0, SD1, SD2, SD3);
+  FILESYS.setPins(CLK, CMD, SD0, SD1, SD2, SD3);
   if (FILESYS.begin())
   {
 #else
