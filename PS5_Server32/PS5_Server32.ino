@@ -38,7 +38,7 @@
                      // you must select a partition scheme labeled with "SPIFFS" with this enabled and USEFAT must be false.
 
                      // enable internal etahen.h [ true / false ]
-#define INTHEN true  // etahen is placed in the app partition to free up space on the storage for other payloads. \
+#define INTHEN true  // etahen is placed in the app partition to free up space on the storage for other payloads.
                      // with this enabled you do not upload etahen to the board, set this to false if you wish to upload etahen.
 
                       // enable autohen [ true / false ]
