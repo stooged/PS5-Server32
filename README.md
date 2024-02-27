@@ -9,7 +9,7 @@ it is for the <a href=https://github.com/Cryptogenic/PS5-IPV6-Kernel-Exploit>PS5
 using this fork of the exploit <a href=https://github.com/idlesauce/PS5-Exploit-Host>PS5 3.xx / 4.xx Kernel Exploit</a>
 
 
-### this project does not work with the original esp32 board, if you have that board then use the <a href=https://github.com/stooged/PS5-Server32/Archived_PS5_Server32>archived version</a>
+### this project does not work with the original esp32 board, if you have that board then use the <a href=https://github.com/stooged/PS5-Server32/tree/main/Archived_PS5_Server32>archived version</a>
 
 if you wish to use a sd card with your board then also use the archived version.
 
@@ -27,9 +27,9 @@ the project is built using <b><a href=https://github.com/stooged/esp32_https_ser
 
 they can be installed using the <a href=https://docs.arduino.cc/software/ide-v1/tutorials/installing-libraries/>library manager</a>
 
-<img src=https://github.com/stooged/PS5-Server32/blob/main/Images/esp.jpg><br>
-<img src=https://github.com/stooged/PS5-Server32/blob/main/Images/spi.jpg><br>
-<img src=https://github.com/stooged/PS5-Server32/blob/main/Images/fat.jpg><br>
+<img src=https://github.com/stooged/PS5-Server32/blob/main/images/esp.jpg><br>
+<img src=https://github.com/stooged/PS5-Server32/blob/main/images/spi.jpg><br>
+<img src=https://github.com/stooged/PS5-Server32/blob/main/images/fat.jpg><br>
 
 <br>
 
@@ -51,11 +51,11 @@ if you have problems with the board being identified/found in windows then you m
 installation is simple you just use the arduino ide to flash the sketch/firmware to the esp32 board.<br>
 make sure you select a <b>FAT</b> or <b>FATFS</b> partition in the board settings.<br>
 
-plug the esp into your computer and it will show up as a usb flash drive and you can then add the <a href=https://github.com/stooged/PS5-Server32/files>files</a> to the root of the drive.<br>
+plug the esp into your computer and it will show up as a usb flash drive and you can then add the <a href=https://github.com/stooged/PS5-Server32/tree/main/files>files</a> to the root of the drive.<br>
 
-<img src=https://github.com/stooged/PS5-Server32/blob/main/Images/files.jpg><br>
+<img src=https://github.com/stooged/PS5-Server32/blob/main/images/files.jpg><br>
 
-to save space you can use the <a href=https://github.com/stooged/PS5-Server32/gzip>gzip script</a> to compress all of the files.
+to save space you can use the <a href=https://github.com/stooged/PS5-Server32/tree/main/gzip>gzip script</a> to compress all of the files.
 
 <br><br>
 
