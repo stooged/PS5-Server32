@@ -12,6 +12,7 @@
 #include "USB.h"
 #include "USBMSC.h"
 #include "ff.h"
+#include "ah.h"
 
 Adafruit_FlashTransport_ESP32 fT;
 Adafruit_SPIFlash flash(&fT);
@@ -27,6 +28,7 @@ typedef File32 File;
 #define PDESC "PS5-Server"
 #define MDESC "PS5ESP32"
 long btnFmt = 0;
+String henBin = "";
 #if defined(RGB_BUILTIN)
 #define LEDPIN RGB_BUILTIN
 #elif defined(LED_BUILTIN)
@@ -54,6 +56,10 @@ boolean connectWifi = false;
 String WIFI_SSID = "Home_WIFI";
 String WIFI_PASS = "password";
 String WIFI_HOSTNAME = "ps5.local";
+
+// load etaHen automatically
+boolean autoHen = false;
+
 
 //-----------------------------------------------------//
 
@@ -119,6 +125,35 @@ String getMimeType(String filename)
 }
 
 
+void findHen(String directory)
+{
+  File file;
+  char filename[50];
+  File root = fatfs.open(directory, O_RDONLY);
+  while (file.openNext(&root, O_RDONLY))
+  {
+    file.getName(filename, sizeof(filename));
+    String fName = String(filename);
+    if (!fName.startsWith("System Volume Information"))
+    {
+      if (file.isDir()){
+        findHen(fName);
+      }else{
+        String lcfName = fName;
+        lcfName.toLowerCase();
+        if (lcfName.startsWith("etahen"))
+        {
+          henBin = fName;
+        }
+      }
+    }
+    file.close();
+    if (henBin.length() > 0){break;}
+  }
+  root.close();
+}
+
+
 bool loadFromFlash(String path)
 {
   if (path.endsWith("config.ini") || path.endsWith("pk.pem") || path.endsWith("cert.der"))
@@ -139,6 +174,53 @@ bool loadFromFlash(String path)
   {
     path += "index.html";
   }
+
+
+  if (autoHen)
+  {
+    if (path.endsWith("payload_map.js"))
+    {
+      henBin = "";
+      findHen("/");
+      if (henBin.length() >0)
+      {
+        if (henBin.endsWith(".gz"))
+        {
+          henBin.replace(".gz", "");
+        }
+      }
+      else
+      {
+        henBin = "etahen.bin";
+      }
+      String output = "const payload_map =\r\n[";
+      output += "{\r\n";
+      output += "displayTitle: 'etaHEN',\r\n";
+      output += "description: 'Runs With 3.xx and 4.xx. FPKG enabler For FW 3.xx / 4.03-4.51 Only.',\r\n";  
+      output += "fileName: '" + henBin + "',\r\n";
+      output += "author: 'LightningMods_, sleirsgoevy, ChendoChap, astrelsky, illusion',\r\n";
+      output += "source: 'https://github.com/LightningMods/etaHEN',\r\n";
+      output += "version: 'auto'\r\n}\r\n";
+      output += "\r\n];";
+      server.send(200, getMimeType(path), output);
+      return true;
+    }
+
+    if (path.endsWith("index.html"))
+    {
+        server.sendHeader("Content-Encoding", "gzip");
+        server.send_P(200, getMimeType(path).c_str(), index_gz, sizeof(index_gz));
+        return true;
+    }
+    if (path.endsWith("exploit.js"))
+    {
+        server.sendHeader("Content-Encoding", "gzip");
+        server.send_P(200, getMimeType(path).c_str(), exploit_gz, sizeof(exploit_gz));
+        return true;
+    }
+  }
+
+
   String mimeType = getMimeType(path);
   bool isGzip = false;
   File flashFile;
@@ -186,11 +268,13 @@ void handleNotFound()
 
 #if USECONFIG
 void writeConfig() {
-  File iniFile = fatfs.open("/config.ini", O_RDWR | O_APPEND | O_CREAT);
-  if (iniFile) {
+  File iniFile = fatfs.open("/config.ini", O_RDWR | O_CREAT);
+  if (iniFile){
     String tmpcw = "false";
-    if (connectWifi) { tmpcw = "true"; }
-    iniFile.print("\r\nAP_SSID=" + AP_SSID + "\r\nAP_PASS=" + AP_PASS + "\r\nWEBSERVER_IP=" + Server_IP.toString() + "\r\nSUBNET_MASK=" + Subnet_Mask.toString() + "\r\nWIFI_SSID=" + WIFI_SSID + "\r\nWIFI_PASS=" + WIFI_PASS + "\r\nWIFI_HOST=" + WIFI_HOSTNAME + "\r\nCONWIFI=" + tmpcw + "\r\n");
+    String tmpah = "false";
+    if (connectWifi){tmpcw = "true";}
+    if (autoHen){tmpah = "true";}
+    iniFile.print("NOTE: after making changes to this file you must reboot the esp board for the changes to take effect\r\n\r\nAP_SSID=" + AP_SSID + "\r\nAP_PASS=" + AP_PASS + "\r\nWEBSERVER_IP=" + Server_IP.toString() + "\r\nSUBNET_MASK=" + Subnet_Mask.toString() + "\r\nWIFI_SSID=" + WIFI_SSID + "\r\nWIFI_PASS=" + WIFI_PASS + "\r\nWIFI_HOST=" + WIFI_HOSTNAME + "\r\nCONWIFI=" + tmpcw + "\r\nAUTOHEN=" + tmpah + "\r\n");
     iniFile.close();
   }
 }
@@ -225,6 +309,33 @@ void loadSTA() {
 }
 
 
+void handleHTTPS(HTTPRequest *req, HTTPResponse *res)
+{
+  String path = req->getRequestString().c_str();
+  if (instr(path, "/document/") && instr(path, "/ps5/"))
+  {
+    std::string serverHost = WIFI_HOSTNAME.c_str();
+    res->setStatusCode(301);
+    res->setStatusText("Moved Permanently");
+    res->setHeader("Location", "http://" + serverHost + "/index.html");
+    res->println("Moved Permanently");
+  }
+  else if (instr(path, "/update/") && instr(path, "/ps5/"))
+  {
+    res->setStatusCode(200);
+    res->setStatusText("OK");
+    res->setHeader("Content-Type", "application/xml");
+    res->println("<?xml version=\"1.0\" ?><update_data_list><region id=\"us\"><force_update><system auto_update_version=\"00.00\" sdk_version=\"01.00.00.09-00.00.00.0.0\" upd_version=\"01.00.00.00\"/></force_update><system_pup auto_update_version=\"00.00\" label=\"20.02.02.20.00.07-00.00.00.0.0\" sdk_version=\"02.20.00.07-00.00.00.0.0\" upd_version=\"02.20.00.00\"><update_data update_type=\"full\"></update_data></system_pup></region></update_data_list>");
+  }
+  else
+  {
+    res->setStatusCode(404);
+    res->setStatusText("Not Found");
+    res->setHeader("Content-Type", "text/plain");
+    res->println("Not Found");
+  }
+}
+
 
 void setup()
 {
@@ -232,7 +343,8 @@ void setup()
   //Serial.println("start");
 
   pinMode(LEDPIN,OUTPUT);
-
+  digitalWrite(LEDPIN, LOW);
+  
   flash.begin();
   if (!fatfs.begin(&flash))
   {
@@ -242,7 +354,7 @@ void setup()
 
 #if USECONFIG
     if (fatfs.exists("/config.ini")) {
-      File iniFile = fatfs.open("/config.ini", O_RDWR | O_APPEND | O_CREAT);
+      File iniFile = fatfs.open("/config.ini", O_RDWR | O_CREAT);
       if (iniFile) {
         String iniData;
         while (iniFile.available()) {
@@ -291,10 +403,22 @@ void setup()
         if (instr(iniData, "CONWIFI=")) {
           String strcw = split(iniData, "CONWIFI=", "\r\n");
           strcw.trim();
+          strcw.toLowerCase();
           if (strcw.equals("true")) {
             connectWifi = true;
           } else {
             connectWifi = false;
+          }
+        }
+
+        if (instr(iniData, "AUTOHEN=")) {
+          String strah = split(iniData, "AUTOHEN=", "\r\n");
+          strah.trim();
+          strah.toLowerCase();
+          if (strah.equals("true")) {
+            autoHen = true;
+          } else {
+            autoHen = false;
           }
         }
       }
@@ -339,10 +463,10 @@ void setup()
     else
     {
       //Serial.println("Certificate created");
-      File pkFile = fatfs.open("/pk.pem", O_RDWR | O_APPEND | O_CREAT);
+      File pkFile = fatfs.open("/pk.pem", O_RDWR | O_CREAT);
       pkFile.write(cert->getPKData(), cert->getPKLength());
       pkFile.close();
-      File certFile = fatfs.open("/cert.der", O_RDWR | O_APPEND | O_CREAT);
+      File certFile = fatfs.open("/cert.der", O_RDWR | O_CREAT);
       certFile.write(cert->getCertData(), cert->getCertLength());
       certFile.close();
     }
@@ -366,34 +490,7 @@ void setup()
   USB.productName(PDESC);
   USB.manufacturerName(MDESC);
   USB.begin();
-}
-
-
-void handleHTTPS(HTTPRequest *req, HTTPResponse *res)
-{
-  String path = req->getRequestString().c_str();
-  if (instr(path, "/document/") && instr(path, "/ps5/"))
-  {
-    std::string serverHost = WIFI_HOSTNAME.c_str();
-    res->setStatusCode(301);
-    res->setStatusText("Moved Permanently");
-    res->setHeader("Location", "http://" + serverHost + "/index.html");
-    res->println("Moved Permanently");
-  }
-  else if (instr(path, "/update/") && instr(path, "/ps5/"))
-  {
-    res->setStatusCode(200);
-    res->setStatusText("OK");
-    res->setHeader("Content-Type", "application/xml");
-    res->println("<?xml version=\"1.0\" ?><update_data_list><region id=\"us\"><force_update><system auto_update_version=\"00.00\" sdk_version=\"01.00.00.09-00.00.00.0.0\" upd_version=\"01.00.00.00\"/></force_update><system_pup auto_update_version=\"00.00\" label=\"20.02.02.20.00.07-00.00.00.0.0\" sdk_version=\"02.20.00.07-00.00.00.0.0\" upd_version=\"02.20.00.00\"><update_data update_type=\"full\"></update_data></system_pup></region></update_data_list>");
-  }
-  else
-  {
-    res->setStatusCode(404);
-    res->setStatusText("Not Found");
-    res->setHeader("Content-Type", "text/plain");
-    res->println("Not Found");
-  }
+  
 }
 
 
@@ -443,12 +540,12 @@ static int32_t onRead(uint32_t lba, uint32_t offset, void *buffer, uint32_t bufs
 void format_flash(void)
 {
   uint8_t workbuf[4096];
-  FATFS elmchamFatfs;
+  FATFS ecffs;
   FRESULT r = f_mkfs("", FM_FAT, 0, workbuf, sizeof(workbuf));
   if (r != FR_OK) {
     while(1) yield();
   }
-  r = f_mount(&elmchamFatfs, "0:", 1);
+  r = f_mount(&ecffs, "0:", 1);
   if (r != FR_OK) {
     while(1) yield();
   }
