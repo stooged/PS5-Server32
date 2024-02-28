@@ -13,6 +13,7 @@
 #include "USBMSC.h"
 #include "ff.h"
 #include "ah.h"
+#include "etahen.h"
 
 Adafruit_FlashTransport_ESP32 fT;
 Adafruit_SPIFlash flash(&fT);
@@ -202,20 +203,20 @@ bool loadFromFlash(String path)
       output += "source: 'https://github.com/LightningMods/etaHEN',\r\n";
       output += "version: 'auto'\r\n}\r\n";
       output += "\r\n];";
-      server.send(200, getMimeType(path), output);
+      server.send(200, "application/javascript", output);
       return true;
     }
 
     if (path.endsWith("index.html"))
     {
         server.sendHeader("Content-Encoding", "gzip");
-        server.send_P(200, getMimeType(path).c_str(), index_gz, sizeof(index_gz));
+        server.send_P(200, "text/html", index_gz, sizeof(index_gz));
         return true;
     }
     if (path.endsWith("exploit.js"))
     {
         server.sendHeader("Content-Encoding", "gzip");
-        server.send_P(200, getMimeType(path).c_str(), exploit_gz, sizeof(exploit_gz));
+        server.send_P(200, "application/javascript", exploit_gz, sizeof(exploit_gz));
         return true;
     }
   }
@@ -260,6 +261,15 @@ void handleNotFound()
   {
     server.send(200, "text/html", "<!DOCTYPE html><html><head><style>body{background-color: #2F3335;color: #ffffff;font-size: 18px; font-weight: bold; margin: 0 0 0 0.0; padding: 0.4em 0.4em 0.4em 0.6em;}</style></head><center><br><br><br><br><br><br>index.html not found<br>connect the esp to a pc and transfer the files to the storage</center></html>");
     return;
+  }
+  if (autoHen)
+  {
+    if (server.uri().endsWith("etahen.bin"))
+    {
+      server.sendHeader("Content-Encoding", "gzip");
+      server.send_P(200, "application/octet-stream", etahen_gz, sizeof(etahen_gz));
+      return;
+    }
   }
   //Serial.println("Not Found: " + server.uri());
   server.send(404, "text/plain", "Not Found");
