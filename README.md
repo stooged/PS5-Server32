@@ -49,7 +49,7 @@ if you have problems with the board being identified/found in windows then you m
 ## Uploading to board
 
 installation is simple you just use the arduino ide to flash the sketch/firmware to the esp32 board.<br>
-make sure you select a <b>FAT</b> or <b>FATFS</b> partition in the board settings.<br>
+make sure you select a <b>FAT</b> or <b>FATFS</b> partition in the board settings or use a custom partition in the <a href=https://github.com/stooged/PS5-Server32/tree/main/partitions>partitions</a> folder.
 
 plug the esp into your computer and it will show up as a usb flash drive and you can then add the <a href=https://github.com/stooged/PS5-Server32/tree/main/files>files</a> to the root of the drive.<br>
 
